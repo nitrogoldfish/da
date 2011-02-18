@@ -1,12 +1,12 @@
 This is a tool for aliasing directories.
 
-normal use:
-#setting some aliases (assuming alias 'bar' is not currently set)
+##Saving aliases, changing directories
 $ da /path/to/the/first/directory/ foo
 #will switch to the directory and save an alias to it called "foo" for future use
-$ cd /path/to/the/second/directory/
+$ da /path/to/the/second/directory/
+#if no alias is given, da will simply switch to the specified directory
 $ da bar
-#since alias 'bar' is unset, will prompt if it should be saved
+#if alias 'bar' is unset, da will prompt if it should be saved
 #if you answer yes, saves an alias to the current directory named "bar"
 #alternatively, you may specify another directory to save instead of the current directory
 
@@ -20,9 +20,18 @@ $ da foo #will cd to /path/to/the/first/directory
 $ da bar #will cd to /path/to/the/second/directory
 
 $ da ls #list all aliases
-$ da ls foo #list all aliases that contain the string 'oo'. (supports some regular expressions)
+$ da ls foo #list all aliases that contain the string 'foo'. (supports some regular expressions)
 
 $ da del bar #delete the alias named 'bar'
+
+##profiles
+$ da use [profile]
+#use the profile name specified. if no profile name is given, switch to the default profile
+$ da delprof [profile]
+#delete the specified profile. cannot delete the default profile.
+$ da lsprof
+#show a list of all profiles
+
 
 $ da help #print help
 

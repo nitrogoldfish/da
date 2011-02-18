@@ -1,8 +1,15 @@
 #!/bin/bash 
 
+#set to "yes" to make profiles global.
+#if using global profiles, then setting a profile in one terminal will effect all terminals
+#otherwise, it will be kept in an env variable
+DA_USE_GLOBAL_PROFILE="no"
+DA_CURRENT_PROFILE="default"
+
+mkdir -p $HOME/.da
 function da(){
-	mkdir -p $HOME/.da
-	conf="$HOME/.da/default.conf"
+	profile="$(da_current_profile)"
+	conf="$HOME/.da/$profile.conf"
 	touch $conf
 	cmd="$1"
 	case "$cmd" in
@@ -10,7 +17,16 @@ function da(){
 			da_help
 			;;
 		'use')
-			echo "multiple profiles is not implemented yet"
+			da_use_profile "$2"
+			;;
+		'using')
+			echo "using '$profile' profile"
+			;;
+		'delprof')
+			da_delete_profile "$2"
+			;;
+		'lsprof')
+			da_list_profiles
 			;;
 		'del'|'kill')
 			da_remove_alias "$2"
@@ -34,22 +50,70 @@ da
 	cd to HOME
 da -
 	switch to the previous working directory
-da some/existing/directory
-	cd to the specified directory
 da some/existing/directory [alias]
-	cd to the specified directory and save it as [alias]
-
+	cd to the specified directory and save it as [alias] (if specified)
+	if no alias is given, simply switch to the directory
 da [alias]
 	switch to directory [alias] points to
-da use [profile]
-	use the aliases defined for [profile] (not implemented yet)
 da del [alias]
 	remove the alias [alias]
 da ls [pattern]
 	list all aliases matching [pattern]
+
+da use [profile]
+	use the aliases defined for [profile]. if no profile given, use default
+da using
+	say what profile is currently in use
+da delprof [profile]
+	delete profile [profile]
+da lsprof
+	list all existing profiles
+
+da help
+	display this help screen
 EOF
 }
 
+function da_current_profile(){
+	if [ "$DA_USE_GLOBAL_PROFILE" == "yes" ]; then
+		profile=$(cat "$HOME/.da/current_profile")
+	else
+		profile="$DA_CURRENT_PROFILE"
+	fi
+	echo $profile
+}
+
+function da_use_profile(){
+	prof="$1"
+	if [ "$prof" == "" ]; then prof="default"; fi
+	if [ "$DA_USE_GLOBAL_PROFILE" == "yes" ]; then
+		echo "$prof" > "$HOME/.da/current_profile"
+	else
+		export DA_CURRENT_PROFILE="$prof"
+	fi
+	echo "switched to $(da_current_profile)"
+}
+
+function da_delete_profile(){
+	prof="$1"
+	proffile="$HOME/.da/$prof.conf"
+	if [ "$prof" == "default" ]; then
+		echo "Erorr: cannot delete the default profile"
+	elif [ -f "$proffile" ];
+		rm "$HOME/.da/$prof.conf"
+		echo "removed $prof profile"
+		if [ "$(da_current_profile)" == "$prof" ]; then
+			da_use_profile "default"
+		fi
+	else
+		echo "Error: $prof profile does not exist"
+	fi
+}
+
+function da_list_profiles(){
+	for prof in $(ls "$HOME/.da/" | egrep '\.conf$'); do basename $prof .conf; done
+	#ls "$HOME/.da/" | egrep '\.conf$' | sed "s/^$HOME//" | sed 's/\.conf$//'
+}
 
 function da_switch_to(){
 	a="$1"
