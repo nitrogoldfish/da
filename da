@@ -1,0 +1,72 @@
+#!/bin/bash 
+
+function da(){
+	mkdir -p $HOME/.da
+	conf="$HOME/.da/default.conf"
+	touch $conf
+	cmd="$1"
+	case "$cmd" in
+		'use')
+			echo "multiple profiles is not implemented yet"
+			;;
+		'del'|'kill')
+			da_remove_alias "$2"
+			;;
+		'ls'|'list')
+			da_list_aliases "$2"
+			;;
+		''|'-')
+			cd $cmd
+			;;
+		*)
+			if [ -d $cmd ]; then
+				cd $cmd
+			else
+				da_switch_to "$cmd"
+			fi
+	esac
+}
+
+function da_switch_to(){
+	a="$1"
+	dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
+	if [ "$dir" == "" ]; then
+		echo "no directory with alias $a"
+		da_save_new "$a"
+	fi
+	if [ "$dir" != "" ] && [ -d "$dir" ]; then
+		cd $dir
+	elif [ "$dir" != "" ]; then
+		echo "Error: $dir doesn't exist"
+		#TODO: prompt to delete broken alias
+	fi
+}
+
+function da_remove_alias(){
+	egrep -v "^$1:" "$conf" > "$conf.tmp"
+	mv "$conf.tmp" "$conf"
+}
+
+function da_save_new(){
+	a="$1"
+	dir="$2"
+	if [ "$dir" == "" ]; then
+		read -p "save $a as an alias for $(pwd)?" save
+		shopt -s nocasematch
+		case "$save" in
+			''|'n'|'no') dir="" ;;
+			'y'|'yes'|'eys') dir="$(pwd)" ;;
+			*) dir="$save"
+		esac
+		shopt -u nocasematch
+	fi
+	if [ "$dir" != "" ] && [ -d "$dir" ]; then
+		echo "$a:$dir" >> $conf
+	fi
+}
+
+function da_list_aliases(){
+	cat $conf | grep "$2" | sed 's/:/: /'
+}
+
+
