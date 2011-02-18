@@ -32,10 +32,12 @@ da works similar to cd, but allows directories to be aliased
 
 da
 	cd to HOME
-da some/existing/directory
-	cd to the specified directory
 da -
 	switch to the previous working directory
+da some/existing/directory
+	cd to the specified directory
+da some/existing/directory [alias]
+	cd to the specified directory and save it as [alias]
 
 da [alias]
 	switch to directory [alias] points to
@@ -57,19 +59,18 @@ function da_switch_to(){
 		if [ "$a" != "" ]; then
 			da_save_new "$a" "$dir"
 		fi
-		cd $dir
 	else
 		dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
 		if [ "$dir" == "" ]; then
 			echo "no directory with alias $a"
 			da_save_new "$a"
 		fi
-		if [ "$dir" != "" ] && [ -d "$dir" ]; then
-			cd $dir
-		elif [ "$dir" != "" ]; then
-			echo "Error: $dir doesn't exist"
-			#TODO: prompt to delete broken alias
-		fi
+	fi
+	if [ "$dir" != "" ] && [ -d "$dir" ]; then
+		cd $dir
+	elif [ "$dir" != "" ]; then
+		echo "Error: $dir doesn't exist"
+		#TODO: prompt to delete broken alias
 	fi
 }
 

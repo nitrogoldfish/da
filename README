@@ -1,13 +1,28 @@
 This is a tool for aliasing directories.
 
 normal use:
-#assuming that 'quickname' is not already an alias for something
-$ cd /path/to/some/directory/that/i/think/is/too/long
-$ da quickname #answer yes to the prompt
-$ cd - #goes back to the previous working directory
-$ da quickname #will cd to /path/to/some/directory/...
+#setting some aliases (assuming alias 'bar' is not currently set)
+$ da /path/to/the/first/directory/ foo
+#will switch to the directory and save an alias to it called "foo" for future use
+$ cd /path/to/the/second/directory/
+$ da bar
+#since alias 'bar' is unset, will prompt if it should be saved
+#if you answer yes, saves an alias to the current directory named "bar"
+#alternatively, you may specify another directory to save instead of the current directory
+
+$ da
+#like cd, without any arguments, da will switch to the home directory
+$ da -
+#also, like cd, da - will switch to the previous working directory
+
+#aliases foo and bar were saved above
+$ da foo #will cd to /path/to/the/first/directory
+$ da bar #will cd to /path/to/the/second/directory
+
 $ da ls #list all aliases
-$ da ls cik #list all aliases that contain the string 'ick'. (supports regular expressions)
-$ da del quickname #delete the alias named 'quickname'
-$ da help #print command use help
+$ da ls foo #list all aliases that contain the string 'oo'. (supports some regular expressions)
+
+$ da del bar #delete the alias named 'bar'
+
+$ da help #print help
 
