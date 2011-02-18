@@ -6,6 +6,9 @@ function da(){
 	touch $conf
 	cmd="$1"
 	case "$cmd" in
+		'help')
+			da_help
+			;;
 		'use')
 			echo "multiple profiles is not implemented yet"
 			;;
@@ -26,6 +29,29 @@ function da(){
 			fi
 	esac
 }
+
+function da_help(){
+cat <<EOF
+da works similar to cd, but allows directories to be aliased
+
+da
+	cd to HOME
+da some/existing/directory
+	cd to the specified directory
+da -
+	switch to the previous working directory
+
+da [alias]
+	switch to directory [alias] points to
+da use [profile]
+	use the aliases defined for [profile] (not implemented yet)
+da del [alias]
+	remove the alias [alias]
+da ls [pattern]
+	list all aliases matching [pattern]
+EOF
+}
+
 
 function da_switch_to(){
 	a="$1"

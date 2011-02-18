@@ -1,0 +1,13 @@
+This is a tool for aliasing directories.
+
+normal use:
+#assuming that 'quickname' is not already an alias for something
+$ cd /path/to/some/directory/that/i/think/is/too/long
+$ da quickname #answer yes to the prompt
+$ cd - #goes back to the previous working directory
+$ da quickname #will cd to /path/to/some/directory/...
+$ da ls #list all aliases
+$ da ls cik #list all aliases that contain the string 'ick'. (supports regular expressions)
+$ da del quickname #delete the alias named 'quickname'
+$ da help #print command use help
+
