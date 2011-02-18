@@ -5,6 +5,7 @@
 #otherwise, it will be kept in an env variable
 DA_USE_GLOBAL_PROFILE="no"
 DA_CURRENT_PROFILE="default"
+DA_CD="pushd"
 
 mkdir -p $HOME/.da
 function da(){
@@ -35,7 +36,7 @@ function da(){
 			da_list_aliases "$2"
 			;;
 		''|'-')
-			cd $cmd
+			$DA_CD $cmd
 			;;
 		*)
 			da_switch_to "$cmd" "$2"
@@ -45,6 +46,7 @@ function da(){
 function da_help(){
 cat <<EOF
 da works similar to cd, but allows directories to be aliased
+By default, da will use 'pushd' instead of 'cd', allowing the user to popd at any time
 
 da
 	cd to HOME
@@ -131,7 +133,7 @@ function da_switch_to(){
 		fi
 	fi
 	if [ "$dir" != "" ] && [ -d "$dir" ]; then
-		cd $dir
+		$DA_CD $dir
 	elif [ "$dir" != "" ]; then
 		echo "Error: $dir doesn't exist"
 		#TODO: prompt to delete broken alias
