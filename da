@@ -22,11 +22,7 @@ function da(){
 			cd $cmd
 			;;
 		*)
-			if [ -d $cmd ]; then
-				cd $cmd
-			else
-				da_switch_to "$cmd"
-			fi
+			da_switch_to "$cmd" "$2"
 	esac
 }
 
@@ -55,16 +51,25 @@ EOF
 
 function da_switch_to(){
 	a="$1"
-	dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
-	if [ "$dir" == "" ]; then
-		echo "no directory with alias $a"
-		da_save_new "$a"
-	fi
-	if [ "$dir" != "" ] && [ -d "$dir" ]; then
+	if [ -d "$a" ]; then
+		dir="$a"
+		a="$2"
+		if [ "$a" != "" ]; then
+			da_save_new "$a" "$dir"
+		fi
 		cd $dir
-	elif [ "$dir" != "" ]; then
-		echo "Error: $dir doesn't exist"
-		#TODO: prompt to delete broken alias
+	else
+		dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
+		if [ "$dir" == "" ]; then
+			echo "no directory with alias $a"
+			da_save_new "$a"
+		fi
+		if [ "$dir" != "" ] && [ -d "$dir" ]; then
+			cd $dir
+		elif [ "$dir" != "" ]; then
+			echo "Error: $dir doesn't exist"
+			#TODO: prompt to delete broken alias
+		fi
 	fi
 }
 
@@ -86,6 +91,7 @@ function da_save_new(){
 		esac
 		shopt -u nocasematch
 	fi
+	dir="$(relative_to_absolute "$dir")"
 	if [ "$dir" != "" ] && [ -d "$dir" ]; then
 		echo "$a:$dir" >> $conf
 	fi
@@ -95,4 +101,12 @@ function da_list_aliases(){
 	cat $conf | egrep "^.*$1.*:" | sed 's/:/: /'
 }
 
+function relative_to_absolute(){
+	dir="$1"
+	if [ $(echo "$dir" | egrep '^/') ]; then
+		echo "$dir"
+	else
+		echo "$(pwd)/$dir"
+	fi
+}
 
