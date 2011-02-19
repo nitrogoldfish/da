@@ -5,7 +5,7 @@
 #otherwise, it will be kept in an env variable
 DA_USE_GLOBAL_PROFILE="no"
 DA_CURRENT_PROFILE="default"
-DA_CD="pushd"
+DA_CD="cd"
 
 mkdir -p $HOME/.da
 function da(){
