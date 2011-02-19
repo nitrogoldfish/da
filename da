@@ -101,7 +101,7 @@ function da_delete_profile(){
 	proffile="$HOME/.da/$prof.conf"
 	if [ "$prof" == "default" ]; then
 		echo "Erorr: cannot delete the default profile"
-	elif [ -f "$proffile" ];
+	elif [ -f "$proffile" ]; then
 		rm "$HOME/.da/$prof.conf"
 		echo "removed $prof profile"
 		if [ "$(da_current_profile)" == "$prof" ]; then
