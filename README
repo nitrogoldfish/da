@@ -12,6 +12,8 @@ $ da bar
 #if alias 'bar' is unset, da will prompt if it should be saved
 #if you answer yes, saves an alias to the current directory named "bar"
 #alternatively, you may specify another directory to save instead of the current directory
+$ da save foobar /path/to/the/third/directory/
+#save 'foobar' as an alias to /path/to/the/third/directory
 
 $ da
 #like cd, without any arguments, da will switch to the home directory

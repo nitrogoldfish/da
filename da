@@ -37,6 +37,9 @@ function da(){
 		'ls'|'list')
 			da_list_aliases "$2"
 			;;
+		'save')
+			da_save "$2" "$3"
+			;;
 		''|'-')
 			$DA_CD $cmd
 			;;
@@ -59,9 +62,11 @@ da some/existing/directory [alias]
 	cd to the specified directory and save it as [alias] (if specified)
 	if no alias is given, simply switch to the directory
 da [alias]
-	switch to directory [alias] points to
+	switch to directory [alias] points to. if alias does not exist, offer to save
 da del [alias]
 	remove the alias [alias]
+da save [alias] [directory]
+	save the specified directory as [alias]. if no [directory] is given use current directory
 da ls [pattern]
 	list all aliases matching [pattern]
 
