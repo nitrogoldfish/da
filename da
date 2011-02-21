@@ -184,7 +184,7 @@ function da_save(){
 	if [ "$dir" == "" ]; then
 		save=$(da_read_input "save $a as an alias for $(pwd)?")
 		case "$save" in
-			'no') dir="" ;;
+			'no') return ;;
 			'yes') dir="$(pwd)" ;;
 			*) dir="$save"
 		esac
