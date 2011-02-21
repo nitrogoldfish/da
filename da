@@ -121,6 +121,12 @@ function da_list_profiles(){
 	for prof in $(ls "$HOME/.da/" | egrep '\.conf$'); do basename $prof .conf; done
 }
 
+function da_resolve_alias(){
+	a="$1"
+	dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
+	echo "$dir"
+}
+
 ##pass 2nd option "nosave" to skip prompting for saving."
 function da_switch_to(){
 	a="$1"
@@ -132,13 +138,13 @@ function da_switch_to(){
 		dir="$a"
 		a="$2"
 		if [ "$a" != "" ]; then
-			da_save_new "$a" "$dir"
+			da_save "$a" "$dir"
 		fi
 	else
-		dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
+		dir="$(da_resolve_alias "$a")"
 		if [ "$dir" == "" ] && [ "$option" != "nosave" ]; then
 			echo "no directory with alias $a"
-			da_save_new "$a"
+			da_save "$a"
 		fi
 	fi
 	if [ "$dir" != "" ] && [ -d "$dir" ]; then
@@ -154,21 +160,41 @@ function da_remove_alias(){
 	mv "$conf.tmp" "$conf"
 }
 
-function da_save_new(){
+function da_read_input(){
+	read -p "$1 " input
+	response=""
+	shopt -s nocasematch
+	case "$input" in
+		''|'n'|'no') response="no" ;;
+		'y'|'yes'|'eys') response="yes" ;;
+		*) response="$input"
+	esac
+	shopt -u nocasematch
+	echo "$response"
+}
+
+function da_save(){
 	a="$1"
 	dir="$2"
 	if [ "$dir" == "" ]; then
-		read -p "save $a as an alias for $(pwd)?" save
-		shopt -s nocasematch
+		save=$(da_read_input "save $a as an alias for $(pwd)?")
 		case "$save" in
-			''|'n'|'no') dir="" ;;
-			'y'|'yes'|'eys') dir="$(pwd)" ;;
+			'no') dir="" ;;
+			'yes') dir="$(pwd)" ;;
 			*) dir="$save"
 		esac
-		shopt -u nocasematch
 	fi
 	dir="$(relative_to_absolute "$dir")"
-	if [ "$dir" != "" ] && [ -d "$dir" ]; then
+	olddir="$(da_resolve_alias "$a")"
+	if [ "$olddir" != "" ]; then
+		overwrite="$(da_read_input "overwrite alias to $olddir?")"
+		if [ "$overwrite" == "yes" ]; then
+			da_remove_alias "$a"
+		fi
+	else
+		overwrite="yes"
+	fi
+	if [ "$dir" != "" ] && [ -d "$dir" ] && [ "$overwrite" == "yes" ]; then
 		echo "$a:$dir" >> $conf
 	fi
 }
