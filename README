@@ -1,5 +1,7 @@
 This is a tool for aliasing directories.
-It changes directories using 'pushd', by default, instead of 'cd'
+
+The mechanism for changing directories is abstracted into the DA_CD environment variable.
+This can be set to 'pushd' or 'cd'. da uses cd by default.
 
 ##Saving aliases, changing directories
 $ da /path/to/the/first/directory/ foo
