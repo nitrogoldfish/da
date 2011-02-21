@@ -6,6 +6,8 @@
 DA_USE_GLOBAL_PROFILE="no"
 DA_CURRENT_PROFILE="default"
 DA_CD="cd"
+#when using profiles, will automatically switch to this alias when profile is loaded
+DA_PROFILE_HOME_ALIAS="defaultdir"
 
 mkdir -p $HOME/.da
 function da(){
@@ -46,12 +48,13 @@ function da(){
 function da_help(){
 cat <<EOF
 da works similar to cd, but allows directories to be aliased
-By default, da will use 'pushd' instead of 'cd', allowing the user to popd at any time
 
 da
 	cd to HOME
 da -
 	switch to the previous working directory
+da .
+	built in shortcut for 'da $DA_PROFILE_HOME_ALIAS'
 da some/existing/directory [alias]
 	cd to the specified directory and save it as [alias] (if specified)
 	if no alias is given, simply switch to the directory
@@ -64,6 +67,7 @@ da ls [pattern]
 
 da use [profile]
 	use the aliases defined for [profile]. if no profile given, use default
+	once switched to the profile, cd to $DA_PROFILE_HOME_ALIAS, if alias is set
 da using
 	say what profile is currently in use
 da delprof [profile]
@@ -93,6 +97,7 @@ function da_use_profile(){
 	else
 		export DA_CURRENT_PROFILE="$prof"
 	fi
+	da "$DA_PROFILE_HOME_ALIAS" "nosave"
 	echo "switched to $(da_current_profile)"
 }
 
@@ -114,11 +119,15 @@ function da_delete_profile(){
 
 function da_list_profiles(){
 	for prof in $(ls "$HOME/.da/" | egrep '\.conf$'); do basename $prof .conf; done
-	#ls "$HOME/.da/" | egrep '\.conf$' | sed "s/^$HOME//" | sed 's/\.conf$//'
 }
 
+##pass 2nd option "nosave" to skip prompting for saving."
 function da_switch_to(){
 	a="$1"
+	option="$2"
+	if [ "$a" == "." ]; then
+		a="$DA_PROFILE_HOME_ALIAS"
+	fi
 	if [ -d "$a" ]; then
 		dir="$a"
 		a="$2"
@@ -127,7 +136,7 @@ function da_switch_to(){
 		fi
 	else
 		dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
-		if [ "$dir" == "" ]; then
+		if [ "$dir" == "" ] && [ "$option" != "nosave" ]; then
 			echo "no directory with alias $a"
 			da_save_new "$a"
 		fi

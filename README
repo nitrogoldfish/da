@@ -17,6 +17,9 @@ $ da
 #like cd, without any arguments, da will switch to the home directory
 $ da -
 #also, like cd, da - will switch to the previous working directory
+$ da .
+# UNLIKE cd, da . is a builtin shortcut to da defaultdir (or whatever the default directory alias is set to)
+# this is intended to make setting and using the default directory much easier
 
 #aliases foo and bar were saved above
 $ da foo #will cd to /path/to/the/first/directory
@@ -34,6 +37,13 @@ $ da delprof [profile]
 #delete the specified profile. cannot delete the default profile.
 $ da lsprof
 #show a list of all profiles
+
+#Some profiles may have a default directory, saved as alias defaultdir, which is switched to when profile is loaded
+$ da use project1
+$ da /path/to/proj1/home defaultdir
+$ da -
+$ da use project1
+#will switch to /path/to/proj1/home, because defaultdir alias is set
 
 
 $ da help #print help
