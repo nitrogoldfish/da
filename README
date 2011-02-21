@@ -3,6 +3,23 @@ This is a tool for aliasing directories.
 The mechanism for changing directories is abstracted into the DA_CD environment variable.
 This can be set to 'pushd' or 'cd'. da uses cd by default.
 
+USAGE:
+da: switch to home directory
+da -: switch to previous working directory
+da COMMAND [ARGS]: execute COMMAND, which may accpet ARGS. Possible commands include:
+	help: display usage help
+	use [PROFILE]: switch to PROFILE (or default, if no profile given). if PROFILE does not exist, create it.
+	using: display current profile
+	delprof PROFILE: delete specified profile
+	lsprof: list all available profiles
+	del|kill ALIAS: delete ALIAS
+	ls|list [PATTERN]: list aliases that match PATTERN. if no pattern is given, list all aliases
+	save ALIAS [DIRECTORY]: save ALIAS to point to DIRECTORY. If no directory is given, prompt, defaulting to CWD
+da DIRECTORY [ALIAS]: switch to DIRECTORY and save as ALIAS, if provided
+da ALIAS: switch to directory saved as ALIAS. if ALIAS is not currently saved, prompt to save it, defaulting to SWD
+
+Example usage:
+
 ##Saving aliases, changing directories
 $ da /path/to/the/first/directory/ foo
 #will switch to the directory and save an alias to it called "foo" for future use
@@ -46,6 +63,9 @@ $ da /path/to/proj1/home defaultdir
 $ da -
 $ da use project1
 #will switch to /path/to/proj1/home, because defaultdir alias is set
+$ da -
+$ da .
+#will switch to /path/to/proj1/home, . is interpreted as defaultdir
 
 
 $ da help #print help
