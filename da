@@ -1,9 +1,11 @@
 #!/bin/bash 
 
-#set to "yes" to make profiles global.
+DA_YES="y"
+DA_NO="n"
+#set to "$DA_YES" to make profiles global.
 #if using global profiles, then setting a profile in one terminal will effect all terminals
 #otherwise, it will be kept in an env variable
-DA_USE_GLOBAL_PROFILE="no"
+DA_USE_GLOBAL_PROFILE="$DA_NO"
 DA_CURRENT_PROFILE="default"
 DA_CD="cd"
 #when using profiles, will automatically switch to this alias when profile is loaded
@@ -85,8 +87,21 @@ da help
 EOF
 }
 
+function da_read_input(){
+	read -p "$1 " input
+	response=""
+	shopt -s nocasematch
+	case "$input" in
+		''|'n'|'no') response="$DA_NO" ;;
+		'y'|'yes'|'eys') response="$DA_YES" ;;
+		*) response="$input"
+	esac
+	shopt -u nocasematch
+	echo "$response"
+}
+
 function da_current_profile(){
-	if [ "$DA_USE_GLOBAL_PROFILE" == "yes" ]; then
+	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
 		profile=$(cat "$HOME/.da/current_profile")
 	else
 		profile="$DA_CURRENT_PROFILE"
@@ -96,8 +111,13 @@ function da_current_profile(){
 
 function da_use_profile(){
 	prof="$1"
+	if [ "$(da_does_profile_exist "$prof")" == "$DA_NO" ]; then
+		if [ "$(da_read_input "profile does not exist. create it now?")" == "$DA_NO" ]; then
+			return
+		fi
+	fi
 	if [ "$prof" == "" ]; then prof="default"; fi
-	if [ "$DA_USE_GLOBAL_PROFILE" == "yes" ]; then
+	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
 		echo "$prof" > "$HOME/.da/current_profile"
 	else
 		export DA_CURRENT_PROFILE="$prof"
@@ -119,6 +139,14 @@ function da_delete_profile(){
 		fi
 	else
 		echo "Error: $prof profile does not exist"
+	fi
+}
+
+function da_does_profile_exist(){
+	if [ -f "$HOME/.da/$1.conf" ]; then
+		echo "$DA_YES"
+	else
+		echo "$DA_NO"
 	fi
 }
 
@@ -165,27 +193,14 @@ function da_remove_alias(){
 	mv "$conf.tmp" "$conf"
 }
 
-function da_read_input(){
-	read -p "$1 " input
-	response=""
-	shopt -s nocasematch
-	case "$input" in
-		''|'n'|'no') response="no" ;;
-		'y'|'yes'|'eys') response="yes" ;;
-		*) response="$input"
-	esac
-	shopt -u nocasematch
-	echo "$response"
-}
-
 function da_save(){
 	a="$1"
 	dir="$2"
 	if [ "$dir" == "" ]; then
 		save=$(da_read_input "save $a as an alias for $(pwd)?")
 		case "$save" in
-			'no') return ;;
-			'yes') dir="$(pwd)" ;;
+			"$DA_NO") return ;;
+			"$DA_YES") dir="$(pwd)" ;;
 			*) dir="$save"
 		esac
 	fi
@@ -193,13 +208,13 @@ function da_save(){
 	olddir="$(da_resolve_alias "$a")"
 	if [ "$olddir" != "" ]; then
 		overwrite="$(da_read_input "overwrite alias to $olddir?")"
-		if [ "$overwrite" == "yes" ]; then
+		if [ "$overwrite" == "$DA_YES" ]; then
 			da_remove_alias "$a"
 		fi
 	else
-		overwrite="yes"
+		overwrite="$DA_YES"
 	fi
-	if [ "$dir" != "" ] && [ -d "$dir" ] && [ "$overwrite" == "yes" ]; then
+	if [ "$dir" != "" ] && [ -d "$dir" ] && [ "$overwrite" == "$DA_YES" ]; then
 		echo "$a:$dir" >> $conf
 	fi
 }
