@@ -2,6 +2,8 @@
 
 #current development thoughts
 #bash tab completion (set up in da_setup function)
+#use 'local' keyword for variable scope control
+#conditionals should be [[ ]] instead of [ ]
 #should keyword '.' be configurable? chosen with the thought "who would cd to .? you're already there"
 #a unit testing framework would be nice...but bash scripts are fucking difficult to test
 #for speed & convenience, maybe reverse behavior of "da" and "da ."?
@@ -124,7 +126,7 @@ function da_setup(){
 #call like this: response="$(da_read_input "question?")"
 function da_read_input(){
 	read -p "$1 (no)" input
-	response="$input"
+	local response="$input"
 	shopt -s nocasematch
 	case "$input" in
 		''|'n'|'no') response="$DA_NO" ;;
