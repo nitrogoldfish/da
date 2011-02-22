@@ -102,6 +102,9 @@ function da_read_input(){
 
 function da_current_profile(){
 	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
+		if [ ! -f "$HOME/.da/current_profile" ]; then
+			echo "default" > "$HOME/.da/current_profile"
+		fi
 		profile=$(cat "$HOME/.da/current_profile")
 	else
 		profile="$DA_CURRENT_PROFILE"
