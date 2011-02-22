@@ -1,50 +1,72 @@
 #!/bin/bash 
 
+#current development thoughts
+#should keyword '.' be configurable? chosen with the thought "who would cd to .? you're already there"
+#should .conf suffix be configurable? makes sed 's/.conf$//' hard in da_list_profiles and little gain
+#auto set up aliases like alias dau="da use"?
+#a unit testing framework would be nice...but bash scripts are fucking difficult to test
+
+#########################
+
+#da constants: modifying these shouldn't matter, but why would you want to?
 DA_YES="y"
 DA_NO="n"
-#set to "$DA_YES" to make profiles global.
-#if using global profiles, then setting a profile in one terminal will effect all terminals
-#otherwise, it will be kept in an env variable
+
+#########################
+
+#da configuration: change things here to tweak the behavior of da
+
+#should da profiles be shared among all terminal windows?
+	#set to "$DA_YES" to make profiles global.
+	#if using global profiles, then setting a profile in one terminal will effect all terminals
+	#otherwise, each terminal windows will use its own da profile
+		#(it will be kept in an environment variable)
 DA_USE_GLOBAL_PROFILE="$DA_NO"
-DA_CURRENT_PROFILE="default"
+
+#directory DA will store profiles in
+DA_HOME="$HOME/.da"
+
+#how to change directories. some reasonable values are 'cd' or 'pushd'
 DA_CD="cd"
-#when using profiles, will automatically switch to this alias when profile is loaded
+
+#name of the default profile
+DA_DEFAULT_PROFILE="default"
+
+#automatically switch to this alias when a profile is loaded
 DA_PROFILE_HOME_ALIAS="defaultdir"
 
-mkdir -p $HOME/.da
+#########################
+
+#da dynamic environment variables. da cares about this, but nobody else does.
+DA_CURRENT_PROFILE="$DA_DEFAULT_PROFILE"
+
+#make sure directory exists
+mkdir -p "$DA_HOME"
+
 function da(){
 	profile="$(da_current_profile)"
-	conf="$HOME/.da/$profile.conf"
-	touch $conf
+	conf="$DA_HOME/$profile.conf"
+	touch "$conf"
 	cmd="$1"
 	case "$cmd" in
 		'help')
-			da_help
-			;;
+			da_help ;;
 		'use')
-			da_use_profile "$2"
-			;;
+			da_use_profile "$2" ;;
 		'using')
-			echo "using '$profile' profile"
-			;;
+			echo "using '$profile' profile" ;;
 		'delprof')
-			da_delete_profile "$2"
-			;;
+			da_delete_profile "$2" ;;
 		'lsprof')
-			da_list_profiles
-			;;
+			da_list_profiles ;;
 		'del'|'kill')
-			da_remove_alias "$2"
-			;;
+			da_remove_alias "$2" ;;
 		'ls'|'list')
-			da_list_aliases "$2"
-			;;
+			da_list_aliases "$2" ;;
 		'save')
-			da_save "$2" "$3"
-			;;
+			da_save "$2" "$3" ;;
 		''|'-')
-			$DA_CD $cmd
-			;;
+			$DA_CD "$cmd" ;;
 		*)
 			da_switch_to "$cmd" "$2"
 	esac
@@ -73,7 +95,7 @@ da ls [pattern]
 	list all aliases matching [pattern]
 
 da use [profile]
-	use the aliases defined for [profile]. if no profile given, use default
+	use the aliases defined for [profile]. if no profile given, use $DA_DEFAULT_PROFILE
 	once switched to the profile, cd to $DA_PROFILE_HOME_ALIAS, if alias is set
 da using
 	say what profile is currently in use
@@ -87,41 +109,49 @@ da help
 EOF
 }
 
+#get user input to a yes/no/other question.
+#n/no is default
+#i mistype "yes" as "eys" frequently enough to account for it
+#call like this: response="$(da_read_input "question?")"
 function da_read_input(){
-	read -p "$1 " input
-	response=""
+	read -p "$1 (no)" input
+	response="$input"
 	shopt -s nocasematch
 	case "$input" in
 		''|'n'|'no') response="$DA_NO" ;;
 		'y'|'yes'|'eys') response="$DA_YES" ;;
-		*) response="$input"
 	esac
 	shopt -u nocasematch
 	echo "$response"
 }
 
+#echo the current profile.
+#call like this: prof="$(da_current_profile)"
 function da_current_profile(){
 	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
-		if [ ! -f "$HOME/.da/current_profile" ]; then
-			echo "default" > "$HOME/.da/current_profile"
+		if [ ! -f "$DA_HOME/current_profile" ]; then
+			echo "$DA_DEFAULT_PROFILE" > "$DA_HOME/current_profile"
 		fi
-		profile=$(cat "$HOME/.da/current_profile")
+		profile="$(cat "$DA_HOME/current_profile")"
 	else
 		profile="$DA_CURRENT_PROFILE"
 	fi
-	echo $profile
+	echo "$profile"
 }
 
+#switch to a profile, or $DA_DEFAULT_PROFILE if none given
+#if profile doesn't exist, will create it after prompting
+#call like this: da_use_profile ["PROFILE"]
 function da_use_profile(){
 	prof="$1"
+	if [ "$prof" == "" ]; then prof="$DA_DEFAULT_PROFILE"; fi
 	if [ "$(da_does_profile_exist "$prof")" == "$DA_NO" ]; then
-		if [ "$(da_read_input "profile does not exist. create it now?")" == "$DA_NO" ]; then
+		if [ "$(da_read_input "profile does not exist. create it now?")" != "$DA_YES" ]; then
 			return
 		fi
 	fi
-	if [ "$prof" == "" ]; then prof="default"; fi
 	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
-		echo "$prof" > "$HOME/.da/current_profile"
+		echo "$prof" > "$DA_HOME/current_profile"
 	else
 		export DA_CURRENT_PROFILE="$prof"
 	fi
@@ -129,47 +159,64 @@ function da_use_profile(){
 	echo "switched to $(da_current_profile)"
 }
 
+#delete a profile. will not prompt for confirmation.
+#call like this: da_delete_profile "PROFILE"
 function da_delete_profile(){
 	prof="$1"
-	proffile="$HOME/.da/$prof.conf"
-	if [ "$prof" == "default" ]; then
-		echo "Erorr: cannot delete the default profile"
-	elif [ -f "$proffile" ]; then
-		rm "$HOME/.da/$prof.conf"
+	proffile="$DA_HOME/$prof.conf"
+	if [ "$(da_does_profile_exist "$prof")" != "$DA_YES" ]; then
+		echo "Error: $prof profile does not exist"
+	elif [ "$prof" == "$DA_DEFAULT_PROFILE" ]; then
+		echo "Error: cannot delete the default profile"
+	else
+		rm "$proffile"
 		echo "removed $prof profile"
 		if [ "$(da_current_profile)" == "$prof" ]; then
-			da_use_profile "default"
+			da_use_profile "$DA_DEFAULT_PROFILE"
 		fi
-	else
-		echo "Error: $prof profile does not exist"
 	fi
 }
 
+#check if a profile exists
+#call like this: prof_exists="$(da_does_profile_exist "PROFILE")"
 function da_does_profile_exist(){
-	if [ -f "$HOME/.da/$1.conf" ]; then
+	if [ -f "$DA_HOME/$1.conf" ]; then
 		echo "$DA_YES"
 	else
 		echo "$DA_NO"
 	fi
 }
 
+#list off all profiles known to da
+#call like this: da_list_profiles
 function da_list_profiles(){
-	for prof in $(ls "$HOME/.da/" | egrep '\.conf$'); do basename $prof .conf; done
+	for prof in $(ls "$DA_HOME/" | egrep '\.conf$'); do basename "$prof" .conf; done
 }
 
+#figure out which directory an alias points to. give an empty string if none
+#call like this: dir="$(da_resolve_alias "SOME_ALIAS")"
 function da_resolve_alias(){
 	a="$1"
-	dir="$(egrep "^$a:" "$conf" | head -n 1 | cut -d: -f2)"
+	#pipe to tail -n 1 so that if multiple alias definitions exist, the most recently defined one is used
+	dir="$(egrep "^$a:" "$conf" | tail -n 1 | cut -d: -f2)"
 	echo "$dir"
 }
 
-##pass 2nd option "nosave" to skip prompting for saving."
+#cd to some alias.
+#multiple ways to call this:
+#	da_switch_to .: same as 'da "$DA_PROFILE_HOME_ALIAS"'
+#	da_switch_to "/some/directory": cd to the given directory
+#	da_switch_to "/some/directory ALIAS": cd to the given directory and save it as ALIAS
+#	da_switch_to "SOME_ALIAS": cd to wherever SOME_ALIAS goes. if SOME_ALIAS is not defined, offer to save it
+#	da_switch_to "SOME_ALIAS" "nosave": cd to wherever SOME_ALIAS goes. no not offer to save if SOME_ALIAS is not defined
+#potential weird behavior:
+#	da_switch_to "dir" (where "dir" is both a defined alias and a child directory under the current directory)
+#	da_switch_to "/some/directory" nosave
 function da_switch_to(){
 	a="$1"
 	option="$2"
-	if [ "$a" == "." ]; then
-		a="$DA_PROFILE_HOME_ALIAS"
-	fi
+	#. should be treated as "$DA_PROFILE_HOME_ALIAS"
+	if [ "$a" == "." ]; then a="$DA_PROFILE_HOME_ALIAS"; fi
 	if [ -d "$a" ]; then
 		dir="$a"
 		a="$2"
@@ -184,23 +231,30 @@ function da_switch_to(){
 		fi
 	fi
 	if [ "$dir" != "" ] && [ -d "$dir" ]; then
-		$DA_CD $dir
+		$DA_CD "$dir"
 	elif [ "$dir" != "" ]; then
 		echo "Error: $dir doesn't exist"
 		#TODO: prompt to delete broken alias
 	fi
 }
 
+#delete an existing alias. silently does nothing if alias does not exist
+#call like this: da_remove_alias "$SOME_ALIAS"
+#potential weird behavior:
+#	if, for some ungodly reason, $conf.tmp exists, it will be overwritten and removed
 function da_remove_alias(){
 	egrep -v "^$1:" "$conf" > "$conf.tmp"
 	mv "$conf.tmp" "$conf"
 }
 
+#save an alias to point to a directory
+#call like this: da_save "$alias" "/target/directory"
+#if no target directory is given, prompt if it should be saved as the current directory
 function da_save(){
 	a="$1"
 	dir="$2"
 	if [ "$dir" == "" ]; then
-		save=$(da_read_input "save $a as an alias for $(pwd)?")
+		save="$(da_read_input "save $a as an alias for $(pwd)?")"
 		case "$save" in
 			"$DA_NO") return ;;
 			"$DA_YES") dir="$(pwd)" ;;
@@ -209,23 +263,29 @@ function da_save(){
 	fi
 	dir="$(relative_to_absolute "$dir")"
 	olddir="$(da_resolve_alias "$a")"
+	#prompt overwrite if alias already exists
+	complete_save="$DA_YES"
 	if [ "$olddir" != "" ]; then
-		overwrite="$(da_read_input "overwrite alias to $olddir?")"
-		if [ "$overwrite" == "$DA_YES" ]; then
+		complete_save="$(da_read_input "overwrite alias to $olddir?")"
+		if [ "$complete_save" == "$DA_YES" ]; then
 			da_remove_alias "$a"
 		fi
-	else
-		overwrite="$DA_YES"
 	fi
-	if [ "$dir" != "" ] && [ -d "$dir" ] && [ "$overwrite" == "$DA_YES" ]; then
-		echo "$a:$dir" >> $conf
+	if [ "$dir" != "" ] && [ -d "$dir" ] && [ "$complete_save" == "$DA_YES" ]; then
+		echo "$a:$dir" >> "$conf"
 	fi
 }
 
+#list all aliases matching the given pattern.
+#grep provides both basic pattern matching and reasonable default behavior if no pattern
+#call like this: da_list_aliases "SOME_STRING"
 function da_list_aliases(){
-	cat $conf | egrep "^.*$1.*:" | sed 's/:/: /'
+	cat "$conf" | egrep "^.*$1.*:" | sed 's/:/: /'
 }
 
+#turn a relative path into an absolute path
+#this could use some cleanup to resolve something like foo/../bar
+#call like this: dir="$(relative_to_absolute "some/path")"
 function relative_to_absolute(){
 	dir="$1"
 	if [ $(echo "$dir" | egrep '^/') ]; then
