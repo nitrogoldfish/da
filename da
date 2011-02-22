@@ -66,7 +66,7 @@ function da(){
 		'save')
 			da_save "$2" "$3" ;;
 		''|'-')
-			$DA_CD "$cmd" ;;
+			$DA_CD $cmd ;;
 		*)
 			da_switch_to "$cmd" "$2"
 	esac
