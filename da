@@ -1,10 +1,12 @@
 #!/bin/bash 
 
 #current development thoughts
+#bash tab completion (set up in da_setup function)
 #should keyword '.' be configurable? chosen with the thought "who would cd to .? you're already there"
-#should .conf suffix be configurable? makes sed 's/.conf$//' hard in da_list_profiles and little gain
-#auto set up aliases like alias dau="da use"?
 #a unit testing framework would be nice...but bash scripts are fucking difficult to test
+
+#rejected ideas
+#should .conf suffix be configurable? no: makes sed 's/.conf$//' hard in da_list_profiles and little gain
 
 #########################
 
@@ -107,6 +109,12 @@ da lsprof
 da help
 	display this help screen
 EOF
+}
+
+#set up useful shortcuts
+#call like this: da_setup
+function da_setup(){
+	alias dau="da use"
 }
 
 #get user input to a yes/no/other question.
@@ -234,7 +242,9 @@ function da_switch_to(){
 		$DA_CD "$dir"
 	elif [ "$dir" != "" ]; then
 		echo "Error: $dir doesn't exist"
-		#TODO: prompt to delete broken alias
+		if [ "$(da_read_input "delete broken alias to $dir?")" == "$DA_YES" ];  then
+			da_remove_alias "$a"
+		fi
 	fi
 }
 
