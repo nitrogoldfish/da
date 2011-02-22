@@ -4,6 +4,7 @@
 #bash tab completion (set up in da_setup function)
 #should keyword '.' be configurable? chosen with the thought "who would cd to .? you're already there"
 #a unit testing framework would be nice...but bash scripts are fucking difficult to test
+#for speed & convenience, maybe reverse behavior of "da" and "da ."?
 
 #rejected ideas
 #should .conf suffix be configurable? no: makes sed 's/.conf$//' hard in da_list_profiles and little gain
