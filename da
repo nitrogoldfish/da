@@ -3,7 +3,6 @@
 #current development thoughts
 #bash tab completion (set up in da_setup function)
 #use 'local' keyword for variable scope control
-#conditionals should be [[ ]] instead of [ ]
 #should keyword '.' be configurable? chosen with the thought "who would cd to .? you're already there"
 #a unit testing framework would be nice...but bash scripts are fucking difficult to test
 #for speed & convenience, maybe reverse behavior of "da" and "da ."?
@@ -139,8 +138,8 @@ function da_read_input(){
 #echo the current profile.
 #call like this: prof="$(da_current_profile)"
 function da_current_profile(){
-	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
-		if [ ! -f "$DA_HOME/current_profile" ]; then
+	if [[ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]]; then
+		if [[ ! -f "$DA_HOME/current_profile" ]]; then
 			echo "$DA_DEFAULT_PROFILE" > "$DA_HOME/current_profile"
 		fi
 		profile="$(cat "$DA_HOME/current_profile")"
@@ -155,13 +154,13 @@ function da_current_profile(){
 #call like this: da_use_profile ["PROFILE"]
 function da_use_profile(){
 	prof="$1"
-	if [ "$prof" == "" ]; then prof="$DA_DEFAULT_PROFILE"; fi
-	if [ "$(da_does_profile_exist "$prof")" == "$DA_NO" ]; then
-		if [ "$(da_read_input "profile does not exist. create it now?")" != "$DA_YES" ]; then
+	if [[ "$prof" == "" ]]; then prof="$DA_DEFAULT_PROFILE"; fi
+	if [[ "$(da_does_profile_exist "$prof")" == "$DA_NO" ]]; then
+		if [[ "$(da_read_input "profile does not exist. create it now?")" != "$DA_YES" ]]; then
 			return
 		fi
 	fi
-	if [ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]; then
+	if [[ "$DA_USE_GLOBAL_PROFILE" == "$DA_YES" ]]; then
 		echo "$prof" > "$DA_HOME/current_profile"
 	else
 		export DA_CURRENT_PROFILE="$prof"
@@ -175,14 +174,14 @@ function da_use_profile(){
 function da_delete_profile(){
 	prof="$1"
 	proffile="$DA_HOME/$prof.conf"
-	if [ "$(da_does_profile_exist "$prof")" != "$DA_YES" ]; then
+	if [[ "$(da_does_profile_exist "$prof")" != "$DA_YES" ]]; then
 		echo "Error: $prof profile does not exist"
-	elif [ "$prof" == "$DA_DEFAULT_PROFILE" ]; then
+	elif [[ "$prof" == "$DA_DEFAULT_PROFILE" ]]; then
 		echo "Error: cannot delete the default profile"
 	else
 		rm "$proffile"
 		echo "removed $prof profile"
-		if [ "$(da_current_profile)" == "$prof" ]; then
+		if [[ "$(da_current_profile)" == "$prof" ]]; then
 			da_use_profile "$DA_DEFAULT_PROFILE"
 		fi
 	fi
@@ -191,7 +190,7 @@ function da_delete_profile(){
 #check if a profile exists
 #call like this: prof_exists="$(da_does_profile_exist "PROFILE")"
 function da_does_profile_exist(){
-	if [ -f "$DA_HOME/$1.conf" ]; then
+	if [[ -f "$DA_HOME/$1.conf" ]]; then
 		echo "$DA_YES"
 	else
 		echo "$DA_NO"
@@ -227,25 +226,25 @@ function da_switch_to(){
 	a="$1"
 	option="$2"
 	#. should be treated as "$DA_PROFILE_HOME_ALIAS"
-	if [ "$a" == "." ]; then a="$DA_PROFILE_HOME_ALIAS"; fi
-	if [ -d "$a" ]; then
+	if [[ "$a" == "." ]]; then a="$DA_PROFILE_HOME_ALIAS"; fi
+	if [[ -d "$a" ]]; then
 		dir="$a"
 		a="$2"
-		if [ "$a" != "" ]; then
+		if [[ "$a" != "" ]]; then
 			da_save "$a" "$dir"
 		fi
 	else
 		dir="$(da_resolve_alias "$a")"
-		if [ "$dir" == "" ] && [ "$option" != "nosave" ]; then
+		if [[ "$dir" == "" && "$option" != "nosave" ]]; then
 			echo "no directory with alias $a"
 			da_save "$a"
 		fi
 	fi
-	if [ "$dir" != "" ] && [ -d "$dir" ]; then
+	if [[ "$dir" != "" && -d "$dir" ]]; then
 		$DA_CD "$dir"
-	elif [ "$dir" != "" ]; then
+	elif [[ "$dir" != "" ]]; then
 		echo "Error: $dir doesn't exist"
-		if [ "$(da_read_input "delete broken alias to $dir?")" == "$DA_YES" ];  then
+		if [[ "$(da_read_input "delete broken alias to $dir?")" == "$DA_YES" ]];  then
 			da_remove_alias "$a"
 		fi
 	fi
@@ -266,7 +265,7 @@ function da_remove_alias(){
 function da_save(){
 	a="$1"
 	dir="$2"
-	if [ "$dir" == "" ]; then
+	if [[ "$dir" == "" ]]; then
 		save="$(da_read_input "save $a as an alias for $(pwd)?")"
 		case "$save" in
 			"$DA_NO") return ;;
@@ -278,13 +277,13 @@ function da_save(){
 	olddir="$(da_resolve_alias "$a")"
 	#prompt overwrite if alias already exists
 	complete_save="$DA_YES"
-	if [ "$olddir" != "" ]; then
+	if [[ "$olddir" != "" ]]; then
 		complete_save="$(da_read_input "overwrite alias to $olddir?")"
-		if [ "$complete_save" == "$DA_YES" ]; then
+		if [[ "$complete_save" == "$DA_YES" ]]; then
 			da_remove_alias "$a"
 		fi
 	fi
-	if [ "$dir" != "" ] && [ -d "$dir" ] && [ "$complete_save" == "$DA_YES" ]; then
+	if [[ "$dir" != "" && -d "$dir" && "$complete_save" == "$DA_YES" ]]; then
 		echo "$a:$dir" >> "$conf"
 	fi
 }
@@ -301,7 +300,7 @@ function da_list_aliases(){
 #call like this: dir="$(relative_to_absolute "some/path")"
 function relative_to_absolute(){
 	dir="$1"
-	if [ $(echo "$dir" | egrep '^/') ]; then
+	if [[ $(echo "$dir" | egrep '^/') ]]; then
 		echo "$dir"
 	else
 		echo "$(pwd)/$dir"
