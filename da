@@ -9,8 +9,8 @@
 #for speed & convenience, maybe reverse behavior of "da" and "da ."?
 #use bash file reading where feasible
 #write a function for looking up the alias for the current directory; use in:
-	#setting the screen window title
 	#saving alias to some directory: does that dir already have an alias
+	#my .bashrc will use when setting screen window title
 	#maybe useful in other places
 #split out a proper config file
 
@@ -48,9 +48,6 @@ DA_DEFAULT_PROFILE="default"
 #automatically switch to this alias when a profile is loaded
 DA_PROFILE_HOME_ALIAS="defaultdir"
 
-#should DA attempt to set screen window titles?
-DA_SET_SCREEN_TITLES="$DA_YES"
-
 #########################
 
 #da dynamic environment variables. da cares about this, but nobody else does.
@@ -86,7 +83,6 @@ function da(){
 		*)
 			da_switch_to "$cmd" "$2"
 	esac
-	da_set_screen_title
 }
 
 function da_help(){
@@ -328,30 +324,6 @@ function relative_to_absolute(){
 		echo "$dir"
 	else
 		echo "$(pwd)/$dir"
-	fi
-}
-
-
-#if using gnuscreen, set this window's title
-#call like this: da_set_screen_title
-function da_set_screen_title(){
-	if [[ "$DA_SET_SCREEN_TITLES" == "$DA_YES" ]]; then
-		#look up what alias this directory has:
-		#broken if directories are saved like
-		#/path/to/dir/../otherdir/
-		a="$(egrep ":$(pwd)$" "$conf" | tail -n 1 | cut -d: -f1)"
-		if [[ "$a" == "" ]]; then
-			title="bash"
-		elif [[ "$a" == "$DA_PROFILE_HOME_ALIAS" ]]; then
-			title="."
-		else
-			title="$a"
-		fi
-		if [[ "$profile" != "$DA_DEFAULT_PROFILE" ]]; then
-			title="$profile:$title"
-		fi
-		title="$title |"
-		screen -X title "$title"
 	fi
 }
 
