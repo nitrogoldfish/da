@@ -8,6 +8,11 @@
 #	but bash scripts are fucking difficult to test
 #for speed & convenience, maybe reverse behavior of "da" and "da ."?
 #use bash file reading where feasible
+#write a function for looking up the alias for the current directory; use in:
+	#setting the screen window title
+	#saving alias to some directory: does that dir already have an alias
+	#maybe useful in other places
+#split out a proper config file
 
 #rejected ideas
 #should .conf suffix be configurable? 
@@ -42,6 +47,9 @@ DA_DEFAULT_PROFILE="default"
 
 #automatically switch to this alias when a profile is loaded
 DA_PROFILE_HOME_ALIAS="defaultdir"
+
+#should DA attempt to set screen window titles?
+DA_SET_SCREEN_TITLES="$DA_YES"
 
 #########################
 
@@ -78,6 +86,7 @@ function da(){
 		*)
 			da_switch_to "$cmd" "$2"
 	esac
+	da_set_screen_title
 }
 
 function da_help(){
@@ -304,7 +313,7 @@ function da_save(){
 }
 
 #list all aliases matching the given pattern.
-#grep provides both basic pattern matching and reasonable default behavior if no pattern
+#grep provides both basic pattern matching & reasonable default behavior
 #call like this: da_list_aliases "SOME_STRING"
 function da_list_aliases(){
 	cat "$conf" | egrep "^.*$1.*:" | sed 's/:/: /'
@@ -319,6 +328,30 @@ function relative_to_absolute(){
 		echo "$dir"
 	else
 		echo "$(pwd)/$dir"
+	fi
+}
+
+
+#if using gnuscreen, set this window's title
+#call like this: da_set_screen_title
+function da_set_screen_title(){
+	if [[ "$DA_SET_SCREEN_TITLES" == "$DA_YES" ]]; then
+		#look up what alias this directory has:
+		#broken if directories are saved like
+		#/path/to/dir/../otherdir/
+		a="$(egrep ":$(pwd)$" "$conf" | tail -n 1 | cut -d: -f1)"
+		if [[ "$a" == "" ]]; then
+			title="bash"
+		elif [[ "$a" == "$DA_PROFILE_HOME_ALIAS" ]]; then
+			title="."
+		else
+			title="$a"
+		fi
+		if [[ "$profile" != "$DA_DEFAULT_PROFILE" ]]; then
+			title="$profile:$title"
+		fi
+		title="$title |"
+		screen -X title "$title"
 	fi
 }
 
