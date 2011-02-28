@@ -7,6 +7,7 @@
 #a unit testing framework would be nice...
 #	but bash scripts are fucking difficult to test
 #for speed & convenience, maybe reverse behavior of "da" and "da ."?
+#use bash file reading where feasible
 
 #rejected ideas
 #should .conf suffix be configurable? 
@@ -177,7 +178,7 @@ function da_use_profile(){
 	fi
 	if [[ "$a" == "" ]]; then a="$DA_PROFILE_HOME_ALIAS"; fi
 	da "$a" "nosave"
-	echo "switched to $(da_current_profile)"
+	echo "switched to $(da_current_profile):$a"
 }
 
 #delete a profile. will not prompt for confirmation.
