@@ -168,8 +168,8 @@ function da_current_profile(){
 #if no 2nd arg is passed, switch to profile home (if set)
 #call like this: da_use_profile ["PROFILE"] [ALIAS]
 function da_use_profile(){
-	prof="$1"
-	a="$2"
+	local prof="$1"
+	local a="$2"
 	if [[ "$prof" == "" ]]; then prof="$DA_DEFAULT_PROFILE"; fi
 	if [[ "$(da_does_profile_exist "$prof")" == "$DA_NO" ]]; then
 		if [[ "$(da_read_input "profile does not exist. create it now?")" != "$DA_YES" ]]; then
@@ -181,16 +181,18 @@ function da_use_profile(){
 	else
 		export DA_CURRENT_PROFILE="$prof"
 	fi
-	if [[ "$a" == "" ]]; then a="$DA_PROFILE_HOME_ALIAS"; fi
+	local switchedto="$(da_current_profile)"
+	if [[ "$a" == "" ]]; then a="$DA_PROFILE_HOME_ALIAS"
+	else switchedto="$switchedto:$a"; fi
 	da "$a" "nosave"
-	echo "switched to $(da_current_profile):$a"
+	echo "switched to $switchedto"
 }
 
 #delete a profile. will not prompt for confirmation.
 #call like this: da_delete_profile "PROFILE"
 function da_delete_profile(){
-	prof="$1"
-	proffile="$DA_HOME/$prof.conf"
+	local prof="$1"
+	local proffile="$DA_HOME/$prof.conf"
 	if [[ "$(da_does_profile_exist "$prof")" != "$DA_YES" ]]; then
 		echo "Error: $prof profile does not exist"
 	elif [[ "$prof" == "$DA_DEFAULT_PROFILE" ]]; then
